@@ -1,0 +1,45 @@
+{
+  "name": "vitech-hanet-sdk",
+  "version": "1.0.0",
+  "description": "Shared types, event contracts, enums for ViTech Internal Platform — zero runtime code",
+  "private": true,
+  "type": "module",
+  "author": "HungTQ <hungtrinhnd91@gmail.com>",
+  "license": "UNLICENSED",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/vitech-hanet-sdk.cjs",
+  "module": "./dist/vitech-hanet-sdk.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/vitech-hanet-sdk.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/vitech-hanet-sdk.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "generate-sdk": "openapi-ts",
+    "update-sdk": "node scripts/update-sdk.js"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.97.3",
+    "@types/node": "^25.9.1",
+    "camelcase": "^9.0.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^5.0.1"
+  },
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.13.1"
+  }
+}
