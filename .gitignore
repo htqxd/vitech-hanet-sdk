@@ -24,3 +24,11 @@ dist-ssr
 *.sw?
 .omc
 settings.local.json
+
+# prod
+scripts
+CLAUDE.md
+index.html
+openapi-ts.config.ts
+tsconfig.json
+vite.config.ts
