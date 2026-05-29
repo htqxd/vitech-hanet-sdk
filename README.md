@@ -45,10 +45,6 @@ npm run update-sdk
 
 Bộ SDK được thiết kế tối ưu cho cả hai môi trường: **Server-Side đa khách thuê (Multi-Tenant)** và **Client-Side/Tool đơn người dùng (Single-Tenant)**.
 
-```bash
-npm i git+https://github.com/vitechgroup-npm/vitech-hanet-sdk-prod.git
-```
-
 ### 1. Khởi tạo Client cho Server-Side đa khách thuê (Multi-Tenant - KHUYÊN DÙNG)
 
 Để tránh rò rỉ token chéo giữa các phiên người dùng khác nhau trên Server, hãy dùng **`HanetClientFactory`** để tạo ra các Client độc lập. 
