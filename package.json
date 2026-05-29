@@ -1,11 +1,11 @@
 {
   "name": "vitech-hanet-sdk",
-  "version": "1.0.0",
-  "description": "Shared types, event contracts, enums for ViTech Internal Platform — zero runtime code",
+  "version": "1.0.1",
+  "description": "ViTechGroup has deployed an SDK to use the Hanet AI camera API.",
   "private": true,
   "type": "module",
   "author": "HungTQ <hungtrinhnd91@gmail.com>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "files": [
     "dist"
   ],
