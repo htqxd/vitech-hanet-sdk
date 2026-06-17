@@ -271,3 +271,34 @@ await departmentAddPerson({
 - `src/index.ts`: Tệp entry point chính của npm package, re-export động 100% tự động (Dynamic Star Export) từ SDK và auth-helper để đảm bảo luồng tự động hoá không bao giờ bị gãy khi HANET cập nhật API mới.
 - `src/auth-helper.ts`: Cấu trúc Token Manager, Memory Storage và Client Instance Factory (Best Practices).
 - `src/example.ts`: File ví dụ cách dùng SDK, cấu hình Interceptor chèn token tự động.
+
+---
+
+## 🧪 Kiểm thử (Testing)
+
+Dự án sử dụng **Vitest** để chạy kiểm thử chất lượng toàn diện của bộ SDK, phân chia làm hai phần: Unit Test (mock) và Integration Test (live).
+
+### 1. Cấu hình biến môi trường
+Tạo file `.env` tại thư mục gốc của dự án với các thông số xác thực do HANET cấp:
+```env
+HANET_CLIENT_ID=your_partner_client_id
+HANET_CLIENT_SECRET=your_partner_client_secret
+HANET_PLACE_ID=your_place_id
+HANET_ACCESS_TOKEN="your_access_token_here"
+```
+
+### 2. Chạy Kiểm Thử
+Chạy toàn bộ các ca kiểm thử:
+```bash
+npm run test:run
+```
+
+Chạy kiểm thử ở chế độ Watch (tự động chạy lại khi code thay đổi):
+```bash
+npm run test
+```
+
+### Cấu trúc file test
+- `tests/sdk-mock.test.ts`: Unit Test tự động mock fetch để bao phủ 100% các API calls (~50+ endpoints), kiểm tra tính chính xác của URL, HTTP Method và Header Content-Type của từng yêu cầu.
+- `tests/sdk-integration.test.ts`: Integration Test thực tế gọi lên HANET server bằng static defaultClient hoặc Factory Client (nếu có cấu hình `.env` hợp lệ), đồng thời kiểm thử tính năng tự động làm mới Access Token (Auto-Refresh) và bộ nhớ lưu trữ Token Manager.
+

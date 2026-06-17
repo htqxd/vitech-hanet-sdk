@@ -1048,16 +1048,72 @@ var $ = class {
 			storage: t?.storage,
 			fallbackClient: T({ baseUrl: "https://partner.hanet.ai" })
 		});
-		return t?.token && r.setToken(t.token), n.interceptors.request.use(async (e, t) => {
+		return t?.token && r.setToken(t.token), n.interceptors.request.use(async (e) => {
 			if (e.url.includes("/token") || e.url.includes("/oauth2/")) return e;
-			let n = await r.getOrRefreshAccessToken();
-			if (n) {
-				if (t.body instanceof URLSearchParams) !t.body.has("token") && !t.body.has("access_token") && (t.body.append("token", n), t.body.append("access_token", n));
-				else if (typeof t.body == "object" && t.body !== null) {
-					let e = t.body;
-					!e.token && !e.access_token && (e.token = n, e.access_token = n);
-				}
+			let t = await r.getOrRefreshAccessToken();
+			if (!t) return e;
+			if (e.method === "POST" || e.method === "PUT") {
+				let n = e.headers.get("content-type") || "";
+				if (n.includes("application/x-www-form-urlencoded")) try {
+					let n = await e.clone().text(), r = new URLSearchParams(n);
+					if (!r.has("token") && !r.has("access_token")) return r.append("token", t), r.append("access_token", t), new Request(e.url, {
+						method: e.method,
+						headers: e.headers,
+						body: r.toString(),
+						credentials: e.credentials,
+						mode: e.mode,
+						cache: e.cache,
+						redirect: e.redirect,
+						referrer: e.referrer,
+						integrity: e.integrity,
+						keepalive: e.keepalive,
+						signal: e.signal
+					});
+				} catch {}
+				else if (n.includes("multipart/form-data")) try {
+					let n = await e.clone().formData();
+					if (!n.has("token") && !n.has("access_token")) {
+						n.append("token", t), n.append("access_token", t);
+						let r = new Headers(e.headers);
+						return r.delete("content-type"), new Request(e.url, {
+							method: e.method,
+							headers: r,
+							body: n,
+							credentials: e.credentials,
+							mode: e.mode,
+							cache: e.cache,
+							redirect: e.redirect,
+							referrer: e.referrer,
+							integrity: e.integrity,
+							keepalive: e.keepalive,
+							signal: e.signal
+						});
+					}
+				} catch {}
+				else try {
+					let n = await e.clone().text();
+					if (n) {
+						let r = JSON.parse(n);
+						if (typeof r == "object" && r && !r.token && !r.access_token) return r.token = t, r.access_token = t, new Request(e.url, {
+							method: e.method,
+							headers: e.headers,
+							body: JSON.stringify(r),
+							credentials: e.credentials,
+							mode: e.mode,
+							cache: e.cache,
+							redirect: e.redirect,
+							referrer: e.referrer,
+							integrity: e.integrity,
+							keepalive: e.keepalive,
+							signal: e.signal
+						});
+					}
+				} catch {}
 			}
+			try {
+				let n = new URL(e.url);
+				if (!n.searchParams.has("token") && !n.searchParams.has("access_token")) return n.searchParams.append("token", t), n.searchParams.append("access_token", t), new Request(n.toString(), e);
+			} catch {}
 			return e;
 		}), n.tokenManager = r, n;
 	}

@@ -1,6 +1,6 @@
 {
   "name": "vitech-hanet-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "ViTechGroup has deployed an SDK to use the Hanet AI camera API.",
   "private": true,
   "type": "module",
@@ -29,15 +29,19 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "generate-sdk": "openapi-ts",
-    "update-sdk": "node scripts/update-sdk.js"
+    "update-sdk": "node scripts/update-sdk.js",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",
     "@types/node": "^25.9.1",
     "camelcase": "^9.0.0",
+    "dotenv": "^17.4.2",
     "typescript": "~6.0.2",
     "vite": "^8.0.12",
-    "vite-plugin-dts": "^5.0.1"
+    "vite-plugin-dts": "^5.0.1",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.13.1"
