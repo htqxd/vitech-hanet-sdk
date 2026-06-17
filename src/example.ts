@@ -77,12 +77,24 @@ async function demoSingleTenantClient() {
 
   const MY_TOKEN = 'YOUR_STATIC_ACCESS_TOKEN_HERE';
 
-  // Đăng ký interceptor đơn giản để chèn token tự động
-  defaultClient.interceptors.request.use((request, options) => {
+  // Đăng ký interceptor đơn giản để chèn token tự động vào Request body
+  defaultClient.interceptors.request.use(async (request) => {
     if (request.method === 'POST') {
-      if (options.body instanceof URLSearchParams) {
-        if (!options.body.has('token')) {
-          options.body.append('token', MY_TOKEN);
+      const contentType = request.headers.get('content-type') || '';
+      if (contentType.includes('application/x-www-form-urlencoded')) {
+        try {
+          const bodyText = await request.clone().text();
+          const params = new URLSearchParams(bodyText);
+          if (!params.has('token')) {
+            params.append('token', MY_TOKEN);
+            return new Request(request.url, {
+              method: request.method,
+              headers: request.headers,
+              body: params.toString()
+            });
+          }
+        } catch (e) {
+          // Bỏ qua lỗi
         }
       }
     }

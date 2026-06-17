@@ -223,28 +223,120 @@ export class HanetClientFactory {
     }
 
     // Đăng ký Interceptor đính kèm Token tự động và tự động Refresh Token
-    singleClient.interceptors.request.use(async (request: any, requestOptions: any) => {
+    singleClient.interceptors.request.use(async (request: any) => {
       // Bỏ qua việc đính kèm token cho API cấp phát token oauth2
       if (request.url.includes('/token') || request.url.includes('/oauth2/')) {
         return request;
       }
 
       const validToken = await tokenManager.getOrRefreshAccessToken();
+      if (!validToken) {
+        return request;
+      }
 
-      if (validToken) {
-        if (requestOptions.body instanceof URLSearchParams) {
-          if (!requestOptions.body.has('token') && !requestOptions.body.has('access_token')) {
-            requestOptions.body.append('token', validToken);
-            requestOptions.body.append('access_token', validToken);
+      // Chỉ can thiệp đối với POST/PUT request để đính kèm token vào body
+      if (request.method === 'POST' || request.method === 'PUT') {
+        const contentType = request.headers.get('content-type') || '';
+
+        if (contentType.includes('application/x-www-form-urlencoded')) {
+          try {
+            const bodyText = await request.clone().text();
+            const params = new URLSearchParams(bodyText);
+
+            if (!params.has('token') && !params.has('access_token')) {
+              params.append('token', validToken);
+              params.append('access_token', validToken);
+
+              return new Request(request.url, {
+                method: request.method,
+                headers: request.headers,
+                body: params.toString(),
+                credentials: request.credentials,
+                mode: request.mode,
+                cache: request.cache,
+                redirect: request.redirect,
+                referrer: request.referrer,
+                integrity: request.integrity,
+                keepalive: request.keepalive,
+                signal: request.signal
+              });
+            }
+          } catch (e) {
+            // Bỏ qua lỗi đọc body
           }
-        } else if (typeof requestOptions.body === 'object' && requestOptions.body !== null) {
-          const bodyObj = requestOptions.body as Record<string, any>;
-          if (!bodyObj['token'] && !bodyObj['access_token']) {
-            bodyObj['token'] = validToken;
-            bodyObj['access_token'] = validToken;
+        } else if (contentType.includes('multipart/form-data')) {
+          try {
+            const formData = await request.clone().formData();
+            if (!formData.has('token') && !formData.has('access_token')) {
+              formData.append('token', validToken);
+              formData.append('access_token', validToken);
+
+              const newHeaders = new Headers(request.headers);
+              // Xóa content-type để Request constructor tự tính toán boundary mới cho FormData
+              newHeaders.delete('content-type');
+
+              return new Request(request.url, {
+                method: request.method,
+                headers: newHeaders,
+                body: formData,
+                credentials: request.credentials,
+                mode: request.mode,
+                cache: request.cache,
+                redirect: request.redirect,
+                referrer: request.referrer,
+                integrity: request.integrity,
+                keepalive: request.keepalive,
+                signal: request.signal
+              });
+            }
+          } catch (e) {
+            // Bỏ qua lỗi đọc formData
+          }
+        } else {
+          // Thử nghiệm parse JSON cho các trường hợp khác
+          try {
+            const bodyText = await request.clone().text();
+            if (bodyText) {
+              const bodyObj = JSON.parse(bodyText);
+              if (typeof bodyObj === 'object' && bodyObj !== null) {
+                if (!bodyObj.token && !bodyObj.access_token) {
+                  bodyObj.token = validToken;
+                  bodyObj.access_token = validToken;
+
+                  return new Request(request.url, {
+                    method: request.method,
+                    headers: request.headers,
+                    body: JSON.stringify(bodyObj),
+                    credentials: request.credentials,
+                    mode: request.mode,
+                    cache: request.cache,
+                    redirect: request.redirect,
+                    referrer: request.referrer,
+                    integrity: request.integrity,
+                    keepalive: request.keepalive,
+                    signal: request.signal
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            // Bỏ qua lỗi parse JSON
           }
         }
       }
+
+      // Phương án dự phòng: nạp vào query params nếu không thể nạp vào body
+      try {
+        const urlObj = new URL(request.url);
+        if (!urlObj.searchParams.has('token') && !urlObj.searchParams.has('access_token')) {
+          urlObj.searchParams.append('token', validToken);
+          urlObj.searchParams.append('access_token', validToken);
+          return new Request(urlObj.toString(), request);
+        }
+      } catch (e) {
+        // Bỏ qua lỗi URL
+      }
+
       return request;
     });
 
