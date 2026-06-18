@@ -62,6 +62,57 @@ async function demoMultiTenantServer() {
   }
 }
 
+// 1.5 KỊCH BẢN 1.5: MINH HỌA TỰ ĐỘNG REFRESH TOKEN TRƯỚC KHI SẮP HẾT HẠN (5 PHÚT BUFFER)
+// Cơ chế tự động refresh token được tích hợp sâu trong request interceptor của Factory Client.
+// Khi bạn gọi bất cứ API nào, SDK kiểm tra xem token hiện tại có hết hạn hoặc SẮP HẾT HẠN trong vòng 5 phút tiếp theo hay không.
+// Nếu có, SDK tự động gửi yêu cầu lấy token mới, cập nhật storage, và gửi request đi bằng token mới.
+async function demoAutoRefreshBeforeExpiry() {
+  console.log('\n--- KHỞI CHẠY DEMO TỰ ĐỘNG REFRESH TRƯỚC KHI HẾT HẠN (BUFFER 5 PHÚT) ---');
+
+  const credentials = {
+    client_id: 'YOUR_PARTNER_CLIENT_ID',
+    client_secret: 'YOUR_PARTNER_CLIENT_SECRET'
+  };
+
+  // Giả lập một token SẮP HẾT HẠN trong vòng 3 phút nữa (lớn hơn 0 giây nhưng nhỏ hơn 5 phút buffer)
+  const threeMinutesInMs = 3 * 60 * 1000;
+  const tenantBToken: HanetToken = {
+    access_token: 'SOON_EXPIRING_ACCESS_TOKEN_B',
+    refresh_token: 'REFRESH_TOKEN_B',
+    expires_in: 3600,
+    expires_at: Date.now() + threeMinutesInMs // Sắp hết hạn trong vòng 3 phút
+  };
+
+  const databaseStorage: HanetTokenStorage = {
+    getToken: async () => tenantBToken,
+    setToken: async (newToken) => {
+      tenantBToken.access_token = newToken.access_token;
+      tenantBToken.refresh_token = newToken.refresh_token;
+      tenantBToken.expires_at = newToken.expires_at;
+      console.log('[DATABASE] Tự động refresh thành công! Token mới:', newToken.access_token);
+    }
+  };
+
+  // Tạo client thông qua Factory
+  const clientB = HanetClientFactory.createClient(credentials, {
+    baseUrl: 'https://partner.hanet.ai',
+    storage: databaseStorage,
+    token: tenantBToken
+  });
+
+  console.log('Trạng thái Token ban đầu: Sẽ hết hạn sau 3 phút.');
+  console.log('Chủ động gọi API...');
+
+  // Khi gọi API, Interceptor kiểm tra thấy token sắp hết hạn trong vòng 5 phút (3 phút < 5 phút buffer)
+  // và thực hiện cơ chế tự động refresh dưới nền trước khi gửi request đi.
+  try {
+    await profileGetProfile({ client: clientB });
+  } catch (error) {
+    // Demo giả lập token nên có thể lỗi kết nối thật, nhưng cơ chế refresh đã được trigger dưới nền
+    console.log('Demo kết thúc. Hãy xem logs ở trên để thấy quá trình tự động refresh được kích hoạt khi token sắp hết hạn.');
+  }
+}
+
 // 2. KỊCH BẢN 2: ỨNG DỤNG ĐƠN NGƯỜI DÙNG (SINGLE-TENANT / CLIENT-SIDE)
 // Nếu bạn chỉ viết tool cá nhân hoặc ứng dụng chạy đơn người dùng,
 // bạn có thể sử dụng trực tiếp Singleton client mặc định của SDK.
@@ -113,5 +164,6 @@ async function demoSingleTenantClient() {
 // Hàm khởi chạy demo chung
 export async function runDemo() {
   await demoMultiTenantServer();
+  await demoAutoRefreshBeforeExpiry();
   await demoSingleTenantClient();
 }

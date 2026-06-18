@@ -1,6 +1,6 @@
 {
   "name": "vitech-hanet-sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "ViTechGroup has deployed an SDK to use the Hanet AI camera API.",
   "private": true,
   "type": "module",

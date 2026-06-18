@@ -236,7 +236,13 @@ export class HanetClientFactory {
 
       // Chỉ can thiệp đối với POST/PUT request để đính kèm token vào body
       if (request.method === 'POST' || request.method === 'PUT') {
-        const contentType = request.headers.get('content-type') || '';
+        let contentType = request.headers.get('content-type') || '';
+
+        // Nếu không có Content-Type (thường xảy ra khi gọi API POST không truyền body như profileGetProfile),
+        // chúng ta mặc định giả định và thiết lập nó thành application/x-www-form-urlencoded để truyền token qua body.
+        if (!contentType) {
+          contentType = 'application/x-www-form-urlencoded';
+        }
 
         if (contentType.includes('application/x-www-form-urlencoded')) {
           try {
@@ -247,9 +253,12 @@ export class HanetClientFactory {
               params.append('token', validToken);
               params.append('access_token', validToken);
 
+              const newHeaders = new Headers(request.headers);
+              newHeaders.set('content-type', 'application/x-www-form-urlencoded');
+
               return new Request(request.url, {
                 method: request.method,
-                headers: request.headers,
+                headers: newHeaders,
                 body: params.toString(),
                 credentials: request.credentials,
                 mode: request.mode,
