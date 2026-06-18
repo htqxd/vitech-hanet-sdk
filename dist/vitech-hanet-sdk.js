@@ -1054,21 +1054,25 @@ var $ = class {
 			if (!t) return e;
 			if (e.method === "POST" || e.method === "PUT") {
 				let n = e.headers.get("content-type") || "";
-				if (n.includes("application/x-www-form-urlencoded")) try {
+				if (n ||= "application/x-www-form-urlencoded", n.includes("application/x-www-form-urlencoded")) try {
 					let n = await e.clone().text(), r = new URLSearchParams(n);
-					if (!r.has("token") && !r.has("access_token")) return r.append("token", t), r.append("access_token", t), new Request(e.url, {
-						method: e.method,
-						headers: e.headers,
-						body: r.toString(),
-						credentials: e.credentials,
-						mode: e.mode,
-						cache: e.cache,
-						redirect: e.redirect,
-						referrer: e.referrer,
-						integrity: e.integrity,
-						keepalive: e.keepalive,
-						signal: e.signal
-					});
+					if (!r.has("token") && !r.has("access_token")) {
+						r.append("token", t), r.append("access_token", t);
+						let n = new Headers(e.headers);
+						return n.set("content-type", "application/x-www-form-urlencoded"), new Request(e.url, {
+							method: e.method,
+							headers: n,
+							body: r.toString(),
+							credentials: e.credentials,
+							mode: e.mode,
+							cache: e.cache,
+							redirect: e.redirect,
+							referrer: e.referrer,
+							integrity: e.integrity,
+							keepalive: e.keepalive,
+							signal: e.signal
+						});
+					}
 				} catch {}
 				else if (n.includes("multipart/form-data")) try {
 					let n = await e.clone().formData();
